@@ -5,9 +5,9 @@ This module loads endpoint routers for health, upload, and question answering.
 
 from fastapi import APIRouter
 
-from backend.app.api.health import router as health_router
-from backend.app.api.upload import router as upload_router
-from backend.app.api.ask import router as ask_router
+from app.api.health import router as health_router
+from app.api.upload import router as upload_router
+from app.api.ask import router as ask_router
 
 router = APIRouter()
 router.include_router(health_router)

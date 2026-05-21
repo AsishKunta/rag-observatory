@@ -2,8 +2,8 @@
 
 import os
 from fastapi import APIRouter, File, HTTPException, UploadFile
-from backend.app.models.document import UploadResponse
-from backend.app.services.document_service import DocumentService
+from app.models.document import UploadResponse
+from app.services.document_service import DocumentService
 
 router = APIRouter()
 service = DocumentService()
@@ -15,4 +15,4 @@ async def upload_document(file: UploadFile = File(...)):
         raise HTTPException(status_code=400, detail="Only PDF uploads are supported.")
 
     save_path = service.save_pdf(file.filename, await file.read())
-    return UploadResponse(file_name=os.path.basename(save_path), message="PDF uploaded successfully.")
+    return UploadResponse(filename=os.path.basename(save_path), status="uploaded")

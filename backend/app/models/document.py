@@ -5,11 +5,12 @@ from pydantic import BaseModel
 
 class HealthResponse(BaseModel):
     status: str
+    service: str
 
 
 class UploadResponse(BaseModel):
-    file_name: str
-    message: str
+    filename: str
+    status: str
 
 
 class QuestionRequest(BaseModel):

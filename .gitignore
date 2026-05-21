@@ -1,3 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Upload artifacts
+backend/uploads/
+
+# Local processed files
+*.txt
+
 # Python artifacts
 __pycache__/
 *.py[cod]

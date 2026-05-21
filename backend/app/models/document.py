@@ -11,6 +11,8 @@ class HealthResponse(BaseModel):
 class UploadResponse(BaseModel):
     filename: str
     status: str
+    pages: int
+    characters: int
 
 
 class QuestionRequest(BaseModel):

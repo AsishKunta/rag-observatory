@@ -10,9 +10,16 @@ service = DocumentService()
 
 @router.post("/upload", response_model=UploadResponse, tags=["upload"])
 async def upload_document(file: UploadFile = File(...)):
-    """Persist an uploaded PDF file to local storage."""
+    """Persist an uploaded PDF file to local storage and extract text."""
     if file.content_type != "application/pdf":
         raise HTTPException(status_code=400, detail="Only PDF uploads are supported.")
 
     save_path = service.save_pdf(file.filename, await file.read())
-    return UploadResponse(filename=os.path.basename(save_path), status="uploaded")
+    processed = service.extract_text_from_pdf(save_path)
+
+    return UploadResponse(
+        filename=os.path.basename(save_path),
+        status="processed",
+        pages=processed["pages"],
+        characters=processed["characters"],
+    )

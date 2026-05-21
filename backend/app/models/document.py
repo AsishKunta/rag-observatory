@@ -28,3 +28,5 @@ class SourceItem(BaseModel):
 class AnswerResponse(BaseModel):
     answer: str
     sources: list[str]
+    retrieval: str = "semantic"
+    confidence: float = 0.0

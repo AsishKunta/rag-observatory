@@ -4,7 +4,11 @@ import re
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+from sklearn.metrics.pairwise import cosine_similarity
+
 from app.config.settings import settings
+from app.services.embedding_service import EmbeddingService
 
 STOP_WORDS = {"what", "is", "explain", "tell", "about", "the", "a", "an"}
 
@@ -54,7 +58,6 @@ def format_answer(text: str) -> str:
 
 
 def split_into_chunks(text: str, size: int = 400, overlap: int = 100) -> list[str]:
-
     """Split text into overlapping chunks while preserving readability."""
     text = text.strip()
     if len(text) <= size:
@@ -117,9 +120,90 @@ def score_chunk(query_tokens: list[str], chunk_tokens: list[str]) -> int:
     return score
 
 
+def cosine_similarity_score(query_embedding: list[float], chunk_embedding: list[float]) -> float:
+    """Compute cosine similarity between query and chunk embeddings."""
+    query_vec = np.array(query_embedding).reshape(1, -1)
+    chunk_vec = np.array(chunk_embedding).reshape(1, -1)
+    return float(cosine_similarity(query_vec, chunk_vec)[0][0])
+
+
 class RetrievalService:
-    def search_documents(self, question: str) -> dict[str, list[dict[str, Any]]]:
-        """Search extracted text files and return the top matching text chunks."""
+    def __init__(self):
+        self.embedding_service = EmbeddingService()
+
+    def search_documents(self, question: str) -> dict[str, Any]:
+        """Search extracted text files and return the top matching text chunks (deprecated - use search_semantic)."""
+        return self.search_semantic(question)
+
+    def search_semantic(self, question: str) -> dict[str, Any]:
+        """Search documents using hybrid semantic + keyword retrieval."""
+        processed_dir = Path(settings.upload_dir) / "processed"
+        if not processed_dir.exists():
+            return {"matches": [], "retrieval": "semantic", "confidence": 0.0}
+
+        query_tokens = text_tokens(question, remove_stopwords=True)
+        if not query_tokens:
+            query_tokens = text_tokens(question)
+        if not query_tokens:
+            return {"matches": [], "retrieval": "semantic", "confidence": 0.0}
+
+        all_matches: list[dict[str, Any]] = []
+        chunk_texts: list[str] = []
+
+        for txt_file in sorted(processed_dir.glob("*.txt")):
+            raw_text = txt_file.read_text(encoding="utf-8")
+            cleaned_text = clean_text(raw_text)
+            chunks = split_into_chunks(cleaned_text, size=400, overlap=100)
+
+            for chunk in chunks:
+                chunk_tokens = text_tokens(chunk, remove_stopwords=True)
+                keyword_score = score_chunk(query_tokens, chunk_tokens)
+                chunk_texts.append(chunk)
+                all_matches.append({
+                    "keyword_score": keyword_score,
+                    "source": txt_file.name,
+                    "content": chunk,
+                })
+
+        if not all_matches:
+            return {"matches": [], "retrieval": "semantic", "confidence": 0.0}
+
+        try:
+            query_embedding = self.embedding_service.embed([question])[0]
+            chunk_embeddings = self.embedding_service.embed(chunk_texts)
+
+            for idx, match in enumerate(all_matches):
+                semantic_score = cosine_similarity_score(query_embedding, chunk_embeddings[idx])
+                normalized_keyword_score = min(match["keyword_score"] / 10.0, 1.0)
+                final_score = (0.8 * semantic_score) + (0.2 * normalized_keyword_score)
+                match["semantic_score"] = semantic_score
+                match["score"] = final_score
+
+        except Exception:
+            for match in all_matches:
+                keyword_score = match["keyword_score"]
+                normalized_keyword_score = min(keyword_score / 10.0, 1.0)
+                match["semantic_score"] = 0.0
+                match["score"] = normalized_keyword_score
+
+        all_matches.sort(key=lambda item: item["score"], reverse=True)
+
+        top_matches = [match for match in all_matches if match["score"] >= 0.1][:3]
+        if not top_matches and all_matches:
+            top_matches = all_matches[:3]
+
+        confidence = float(top_matches[0]["score"]) if top_matches else 0.0
+
+        for match in top_matches:
+            match.pop("keyword_score", None)
+            match.pop("semantic_score", None)
+            answer_text = truncate_answer(match["content"], max_chars=1200)
+            match["content"] = format_answer(answer_text)
+
+        return {"matches": top_matches, "retrieval": "semantic", "confidence": round(confidence, 3)}
+
+    def search_keyword(self, question: str) -> dict[str, list[dict[str, Any]]]:
+        """Legacy keyword-only search (kept for compatibility)."""
         processed_dir = Path(settings.upload_dir) / "processed"
         if not processed_dir.exists():
             return {"matches": []}

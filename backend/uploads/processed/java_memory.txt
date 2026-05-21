@@ -1,0 +1,25 @@
+Java Memory Management and Garbage Collection
+
+Java uses automatic memory management through garbage collection. The Java Virtual Machine (JVM) divides heap memory into different generations to optimize garbage collection performance.
+
+Young Generation and Object Allocation
+When objects are created, they are allocated in the young generation heap space. Most objects die young - they become unreachable shortly after creation. The young generation is optimized for fast allocation and quick cleanup. New objects are allocated in the Eden space.
+
+Minor Garbage Collection
+Minor garbage collection runs frequently on the young generation. Objects that survive minor GC are promoted to the old generation. This process helps keep the young generation clean and fast for new allocations.
+
+Old Generation and Major Collection
+Long-lived objects that survive multiple minor garbage collections are promoted to the old generation. Major garbage collection runs less frequently but takes longer because it has to scan all old generation objects.
+
+Garbage Collection Algorithms
+The JVM provides several garbage collection algorithms:
+- Serial GC: Uses a single thread for collection
+- Parallel GC: Uses multiple threads for collection
+- CMS: Concurrent Mark Sweep reduces pause times
+- G1GC: Generational and partitioned heap collection
+
+Memory Leaks in Java
+Even with garbage collection, memory leaks can occur if references to unused objects are not released. Common causes include circular references, static collections that accumulate objects, and listeners that are never unregistered.
+
+Tuning Garbage Collection
+GC tuning involves adjusting heap sizes and selecting appropriate collectors. The -Xms flag sets initial heap size and -Xmx sets maximum heap size. GC logs can be analyzed to understand collection frequency and duration.

@@ -30,6 +30,20 @@ The platform processes uploaded documents, retrieves relevant context using embe
 
 ---
 
+## Architecture
+
+![Architecture](docs/images/architecture.png)
+
+---
+
+## Demo
+
+### Semantic Retrieval + Grounded Generation
+
+![Semantic Response](docs/images/semantic-response.png)
+
+---
+
 ## Retrieval Pipeline
 
 ```text
@@ -51,8 +65,6 @@ LLM Generation
 ↓
 Grounded Answer
 ```
-
----
 
 ## Tech Stack
 

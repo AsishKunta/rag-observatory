@@ -38,7 +38,7 @@ The platform processes uploaded documents, retrieves relevant context using embe
 
 ## Demo
 
-### Semantic Retrieval + Grounded Generation
+### Semantic Retrieval + LLM Grounded Response
 
 ![Semantic Response](docs/images/semantic-response.png)
 

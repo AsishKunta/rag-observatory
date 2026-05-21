@@ -27,4 +27,4 @@ class SourceItem(BaseModel):
 
 class AnswerResponse(BaseModel):
     answer: str
-    sources: list[SourceItem]
+    sources: list[str]

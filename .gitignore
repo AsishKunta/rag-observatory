@@ -1,35 +1,54 @@
+# ======================
 # Python
-.venv/
-__pycache__/
-*.pyc
+# ======================
 
-# Upload artifacts
-backend/uploads/
-
-# Local processed files
-*.txt
-
-# Python artifacts
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-
-# Virtual environments
 .venv/
 venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py[cod]
 
-# Environment files
+# ======================
+# Environment
+# ======================
+
 .env
 .env.*
 
-# IDE / editor folders
+# ======================
+# Upload artifacts
+# ======================
+
+backend/uploads/
+backend/uploads/processed/
+
+# ======================
+# Embedding / ML cache
+# ======================
+
+.cache/
+.cache/*
+models/
+
+# ======================
+# Test / build output
+# ======================
+
+.pytest_cache/
+build/
+dist/
+
+# ======================
+# IDE
+# ======================
+
 .vscode/
 .idea/
 
-# Python test output
-.pytest_cache/
+# ======================
+# OS files
+# ======================
 
-# Build directories
-build/
-dist/
+.DS_Store

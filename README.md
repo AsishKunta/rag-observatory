@@ -170,6 +170,19 @@ Response:
 
 ---
 
+## Running Tests
+
+```bash
+python -m pytest tests -v
+```
+
+The suite covers embedding-cache correctness, upload safety (path traversal and
+PDF validation), chunking, and hybrid retrieval ranking. It uses a deterministic
+fake embedding model, so no model download or Ollama is needed. See
+[`tests/README.md`](tests/README.md).
+
+---
+
 ## Notes
 
 - Built with FastAPI and modular service architecture.
@@ -187,6 +200,7 @@ Completed:
 - ✅ Semantic retrieval
 - ✅ Hybrid scoring
 - ✅ Grounded LLM generation
+- ✅ Automated tests and CI
 - ⬜ Citation enforcement
 - ⬜ Evaluation metrics
 - ⬜ Observability

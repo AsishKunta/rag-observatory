@@ -21,26 +21,19 @@ class EmbeddingService:
         self._cache: dict[str, list[float]] = {}
 
     def embed(self, texts: list[str]) -> list[list[float]]:
-        """Generate embeddings for texts, using cache when available."""
-        embeddings = []
-        texts_to_embed = []
-        text_indices = []
+        """Generate embeddings for texts, using cache when available.
 
-        for idx, text in enumerate(texts):
-            if text in self._cache:
-                embeddings.append((idx, self._cache[text]))
-            else:
-                texts_to_embed.append(text)
-                text_indices.append(idx)
+        Returns one embedding per input text, in input order. Only texts not
+        already cached are sent to the model, and duplicates are encoded once.
+        """
+        # dict.fromkeys de-duplicates while preserving first-seen order.
+        missing = [text for text in dict.fromkeys(texts) if text not in self._cache]
 
-        if texts_to_embed:
-            new_embeddings = self._model.encode(texts_to_embed, convert_to_numpy=True).tolist()
-            for text, embedding in zip(texts_to_embed, new_embeddings):
-                self._cache[text] = embedding
-                embeddings.append((text_indices[len([e for e in embeddings if isinstance(e, tuple)])], embedding))
+        if missing:
+            new_embeddings = self._model.encode(missing, convert_to_numpy=True).tolist()
+            self._cache.update(zip(missing, new_embeddings))
 
-        embeddings.sort(key=lambda x: x[0])
-        return [emb for _, emb in embeddings]
+        return [self._cache[text] for text in texts]
 
     def clear_cache(self) -> None:
         """Clear the embedding cache."""

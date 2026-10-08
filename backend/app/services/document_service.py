@@ -1,18 +1,50 @@
 """Service layer for document ingestion and local storage."""
 
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import List
 from pypdf import PdfReader
 from app.config.settings import settings
 
+PDF_SIGNATURE = b"%PDF-"
+
+
+class InvalidUploadError(ValueError):
+    """Raised when an uploaded file is unsafe or not a PDF."""
+
+
+def safe_pdf_filename(file_name: str | None) -> str:
+    """Reduce a client-supplied filename to a safe bare ``.pdf`` name.
+
+    Client filenames are untrusted: they may contain ``../`` segments,
+    absolute paths, or Windows-style separators. Only the final path
+    component is kept, so a file can never be written outside the upload
+    directory.
+    """
+    # PureWindowsPath splits on both "/" and "\\", covering either OS's paths.
+    name = PureWindowsPath(file_name or "").name.strip()
+    if name in {"", ".", ".."} or "\x00" in name:
+        raise InvalidUploadError("A valid file name is required.")
+    if not name.lower().endswith(".pdf"):
+        raise InvalidUploadError("Only .pdf files are supported.")
+    return name
+
 
 class DocumentService:
     def save_pdf(self, file_name: str, content: bytes) -> str:
-        """Save an uploaded PDF to the local storage directory."""
-        upload_dir = Path(settings.upload_dir)
+        """Validate and save an uploaded PDF to the local storage directory."""
+        safe_name = safe_pdf_filename(file_name)
+        if not content.startswith(PDF_SIGNATURE):
+            # The client-sent content type is not trustworthy; check the bytes.
+            raise InvalidUploadError("File content is not a valid PDF.")
+
+        upload_dir = Path(settings.upload_dir).resolve()
         upload_dir.mkdir(parents=True, exist_ok=True)
 
-        destination = upload_dir / file_name
+        destination = (upload_dir / safe_name).resolve()
+        # Defense in depth: confirm the final path is still inside upload_dir.
+        if destination.parent != upload_dir:
+            raise InvalidUploadError("A valid file name is required.")
+
         with open(destination, "wb") as out_file:
             out_file.write(content)
 

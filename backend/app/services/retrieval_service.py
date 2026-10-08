@@ -1,5 +1,6 @@
 """Retrieval service for finding relevant document chunks in extracted text files."""
 
+import logging
 import re
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 from app.config.settings import settings
 from app.services.embedding_service import EmbeddingService
+
+logger = logging.getLogger(__name__)
 
 STOP_WORDS = {"what", "is", "explain", "tell", "about", "the", "a", "an"}
 
@@ -180,6 +183,8 @@ class RetrievalService:
                 match["score"] = final_score
 
         except Exception:
+            # Keep serving keyword results, but never degrade silently.
+            logger.exception("Semantic scoring failed; falling back to keyword-only retrieval.")
             for match in all_matches:
                 keyword_score = match["keyword_score"]
                 normalized_keyword_score = min(keyword_score / 10.0, 1.0)

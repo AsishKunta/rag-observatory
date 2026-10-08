@@ -1,0 +1,28 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      # Tests swap in a fake embedding model, so the heavy
+      # sentence-transformers/torch install is not needed here.
+      - name: Install test dependencies
+        run: pip install numpy scikit-learn pypdf pydantic pytest
+
+      - name: Run tests
+        run: python -m pytest tests -v
